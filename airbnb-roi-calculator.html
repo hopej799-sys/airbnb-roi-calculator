@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>에어비앤비 수익률 계산기 | 국내 호스트 전문 분석</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --pink:#FF385C;--pink-light:#fff1f3;--pink-dark:#c8002d;
+  --green:#008A05;--green-light:#eafbea;
+  --amber:#E5760A;--amber-light:#fff8ee;
+  --red:#D93025;--red-light:#fdf0ef;
+  --blue:#1A56DB;--blue-light:#eff6ff;
+  --text:#1a1a1a;--text-muted:#6b7280;--text-light:#9ca3af;
+  --border:#e5e7eb;--border-strong:#d1d5db;
+  --bg:#f9fafb;--surface:#ffffff;
+  --radius:12px;--radius-sm:8px;
+  --shadow:0 1px 3px rgba(0,0,0,.08),0 1px 2px rgba(0,0,0,.04);
+}
+body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text);font-size:15px;line-height:1.6;min-height:100vh}
+header{background:var(--surface);border-bottom:1px solid var(--border);padding:0 24px;position:sticky;top:0;z-index:100}
+.header-inner{max-width:1100px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;height:60px}
+.logo{display:flex;align-items:center;gap:10px;font-weight:700;font-size:17px;color:var(--text);text-decoration:none}
+.logo-icon{width:32px;height:32px;background:var(--pink);border-radius:8px;display:flex;align-items:center;justify-content:center;color:white;font-size:16px}
+.badge-beta{background:var(--pink-light);color:var(--pink);font-size:10px;font-weight:700;padding:2px 7px;border-radius:99px}
+.tab-nav{background:var(--surface);border-bottom:1px solid var(--border);padding:0 24px}
+.tab-nav-inner{max-width:1100px;margin:0 auto;display:flex;overflow-x:auto;scrollbar-width:none}
+.tab-nav-inner::-webkit-scrollbar{display:none}
+.tab-btn{padding:14px 18px;border:none;background:none;font-family:inherit;font-size:14px;font-weight:500;color:var(--text-muted);cursor:pointer;white-space:nowrap;border-bottom:2px solid transparent;margin-bottom:-1px;transition:color .15s,border-color .15s;display:flex;align-items:center;gap:6px}
+.tab-btn.active{color:var(--pink);border-bottom-color:var(--pink)}
+.tab-btn:hover:not(.active){color:var(--text)}
+main{max-width:1100px;margin:0 auto;padding:28px 24px 60px}
+.tab-panel{display:none}.tab-panel.active{display:block}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:24px;box-shadow:var(--shadow)}
+.card+.card{margin-top:16px}
+.card-title{font-size:15px;font-weight:700;margin-bottom:18px;display:flex;align-items:center;gap:8px}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
+.grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+@media(max-width:700px){.grid-3,.grid-4{grid-template-columns:1fr 1fr}}
+@media(max-width:480px){.grid-2,.grid-3,.grid-4{grid-template-columns:1fr}}
+.field{display:flex;flex-direction:column;gap:6px}
+.field label{font-size:13px;font-weight:500;color:var(--text-muted)}
+.field input,.field select{padding:10px 12px;border:1px solid var(--border-strong);border-radius:var(--radius-sm);font-family:inherit;font-size:14px;color:var(--text);background:var(--surface);outline:none;transition:border-color .15s}
+.field input:focus,.field select:focus{border-color:var(--pink);box-shadow:0 0 0 3px rgba(255,56,92,.1)}
+.field-hint{font-size:11px;color:var(--text-light);margin-top:2px}
+.btn-primary{background:var(--pink);color:white;border:none;border-radius:var(--radius-sm);padding:12px 24px;font-family:inherit;font-size:15px;font-weight:700;cursor:pointer;transition:background .15s;width:100%;margin-top:6px}
+.btn-primary:hover{background:var(--pink-dark)}
+.btn-secondary{background:transparent;color:var(--text-muted);border:1px solid var(--border-strong);border-radius:var(--radius-sm);padding:8px 14px;font-family:inherit;font-size:13px;font-weight:500;cursor:pointer;transition:background .15s}
+.btn-secondary:hover{background:var(--bg);color:var(--text)}
+.metric-card{background:var(--bg);border-radius:var(--radius-sm);padding:14px 16px;border:1px solid var(--border)}
+.metric-label{font-size:12px;color:var(--text-muted);font-weight:500;margin-bottom:6px}
+.metric-value{font-size:22px;font-weight:700;color:var(--text);line-height:1.2}
+.metric-sub{font-size:11px;color:var(--text-light);margin-top:4px}
+.metric-card.highlight{background:var(--pink-light);border-color:rgba(255,56,92,.2)}
+.metric-card.highlight .metric-value{color:var(--pink)}
+.bar-row{margin:10px 0}
+.bar-row-label{display:flex;justify-content:space-between;font-size:13px;margin-bottom:5px}
+.bar-row-label .name{color:var(--text-muted)}
+.bar-row-label .val{font-weight:500}
+.bar-track{background:var(--bg);border-radius:99px;height:8px;overflow:hidden;border:1px solid var(--border)}
+.bar-fill{height:100%;border-radius:99px;transition:width .6s cubic-bezier(.4,0,.2,1)}
+.tag{display:inline-flex;align-items:center;gap:4px;font-size:12px;font-weight:600;padding:4px 10px;border-radius:99px}
+.tag-green{background:var(--green-light);color:var(--green)}
+.tag-amber{background:var(--amber-light);color:var(--amber)}
+.tag-red{background:var(--red-light);color:var(--red)}
+.tag-blue{background:var(--blue-light);color:var(--blue)}
+hr{border:none;border-top:1px solid var(--border);margin:20px 0}
+.section-label{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text-light);margin-bottom:12px}
+.ai-box{background:linear-gradient(135deg,#fff1f3 0%,#fff8ee 100%);border:1px solid rgba(255,56,92,.15);border-radius:var(--radius);padding:18px 20px;font-size:14px;line-height:1.8;min-height:80px}
+.ai-box.loading{color:var(--text-muted);font-style:italic}
+.reg-table{width:100%;border-collapse:collapse;font-size:13px}
+.reg-table th{background:var(--bg);padding:10px 14px;text-align:left;font-weight:600;color:var(--text-muted);border-bottom:1px solid var(--border);font-size:12px}
+.reg-table td{padding:10px 14px;border-bottom:1px solid var(--border);vertical-align:middle}
+.reg-table tr:last-child td{border-bottom:none}
+.reg-table tr:hover td{background:var(--bg)}
+.competitor-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:14px;display:flex;flex-direction:column;gap:8px}
+.comp-price{font-size:20px;font-weight:700}
+.comp-meta{font-size:12px;color:var(--text-muted)}
+.alert{border-radius:var(--radius-sm);padding:14px 16px;font-size:13px;line-height:1.6;display:flex;gap:10px;margin-bottom:8px}
+.alert-icon{font-size:18px;flex-shrink:0}
+.alert-warn{background:var(--amber-light);border:1px solid rgba(229,118,10,.2);color:#7a4700}
+.alert-info{background:var(--blue-light);border:1px solid rgba(26,86,219,.2);color:#1e40af}
+.alert-success{background:var(--green-light);border:1px solid rgba(0,138,5,.2);color:#065f46}
+.hero-strip{background:var(--pink);border-radius:var(--radius);padding:20px 24px;color:white;margin-bottom:20px;display:flex;align-items:center;justify-content:space-between;gap:16px}
+.hero-strip h1{font-size:20px;font-weight:700;margin-bottom:4px}
+.hero-strip p{font-size:13px;opacity:.85}
+.hero-icon{font-size:40px;flex-shrink:0}
+.tip-list{list-style:none;display:flex;flex-direction:column;gap:8px}
+.tip-list li{display:flex;align-items:flex-start;gap:10px;font-size:13px;line-height:1.5}
+.tip-dot{width:6px;height:6px;background:var(--pink);border-radius:50%;margin-top:6px;flex-shrink:0}
+.data-source{font-size:11px;color:var(--text-light);display:flex;align-items:center;gap:5px;margin-top:8px}
+.table-wrap{overflow-x:auto}
+.two-col{display:grid;grid-template-columns:1fr 380px;gap:16px}
+@media(max-width:900px){.two-col{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-inner">
+    <a class="logo" href="#">
+      <div class="logo-icon">🏠</div>
+      에어비앤비 수익 분석
+      <span class="badge-beta">BETA</span>
+    </a>
+    <div style="font-size:12px;color:var(--text-muted)">국내 호스트 전문 도구</div>
+  </div>
+</header>
+
+<div class="tab-nav">
+  <div class="tab-nav-inner">
+    <button class="tab-btn active" onclick="switchTab('calc',this)">📊 수익률 계산기</button>
+    <button class="tab-btn" onclick="switchTab('occupancy',this)">📈 지역별 점유율</button>
+    <button class="tab-btn" onclick="switchTab('regulation',this)">⚖️ 규제 체크</button>
+    <button class="tab-btn" onclick="switchTab('roi',this)">💰 투자 ROI</button>
+    <button class="tab-btn" onclick="switchTab('competitor',this)">🔍 경쟁 숙소 분석</button>
+  </div>
+</div>
+
+<main>
+
+<!-- TAB 1 -->
+<div class="tab-panel active" id="tab-calc">
+  <div class="hero-strip">
+    <div>
+      <h1>국내 에어비앤비 수익률 계산기</h1>
+      <p>숙소 정보를 입력하면 월 예상 수익과 AI 분석을 바로 확인할 수 있어요</p>
+    </div>
+    <div class="hero-icon">🏡</div>
+  </div>
+  <div class="two-col">
+    <div>
+      <div class="card">
+        <div class="card-title">📋 숙소 기본 정보</div>
+        <div class="grid-2" style="margin-bottom:14px">
+          <div class="field"><label>지역</label>
+            <select id="region">
+              <option value="seoul_gangnam">서울 강남/서초</option>
+              <option value="seoul_hongdae" selected>서울 홍대/마포</option>
+              <option value="seoul_itaewon">서울 이태원/용산</option>
+              <option value="seoul_jongno">서울 종로/중구</option>
+              <option value="jeju_city">제주 제주시</option>
+              <option value="jeju_seogwipo">제주 서귀포</option>
+              <option value="busan_haeundae">부산 해운대</option>
+              <option value="busan_nampo">부산 남포/서면</option>
+              <option value="gangwon">강원도</option>
+              <option value="gyeonggi">경기도</option>
+              <option value="other">기타 지방</option>
+            </select>
+          </div>
+          <div class="field"><label>숙소 유형</label>
+            <select id="type">
+              <option value="studio">원룸/스튜디오</option>
+              <option value="onebed" selected>1베드룸</option>
+              <option value="twobed">2베드룸</option>
+              <option value="house">단독주택/빌라</option>
+              <option value="pension">펜션/독채</option>
+            </select>
+          </div>
+        </div>
+        <div class="grid-3" style="margin-bottom:14px">
+          <div class="field"><label>1박 가격 (원)</label><input type="number" id="price" value="90000" step="5000"></div>
+          <div class="field"><label>청소비 (원)</label><input type="number" id="cleaning" value="20000" step="5000"></div>
+          <div class="field"><label>월 운영일수</label><input type="number" id="days" value="18" min="1" max="31"></div>
+        </div>
+        <hr>
+        <div class="card-title">💸 비용 & 운영 조건</div>
+        <div class="grid-3" style="margin-bottom:14px">
+          <div class="field"><label>월 고정비용 (원)</label><input type="number" id="fixed_cost" value="350000" step="10000"><span class="field-hint">관리비, 인터넷 등</span></div>
+          <div class="field"><label>월 소모품/청소비</label><input type="number" id="variable_cost" value="150000" step="10000"></div>
+          <div class="field"><label>운영 형태</label>
+            <select id="optype">
+              <option value="self">직접 운영</option>
+              <option value="agency">대행사 위탁 (20%)</option>
+            </select>
+          </div>
+        </div>
+        <div class="field" style="margin-bottom:4px"><label>등록 유형</label>
+          <select id="legal">
+            <option value="tourist">관광 숙박업</option>
+            <option value="home">도시민박업</option>
+            <option value="urban">농어촌 민박</option>
+          </select>
+        </div>
+        <button class="btn-primary" onclick="calculate()">📊 수익률 분석하기</button>
+      </div>
+    </div>
+    <div id="result-panel" style="display:none">
+      <div class="card">
+        <div class="card-title">📈 예상 수익 요약</div>
+        <div class="grid-2" style="margin-bottom:12px">
+          <div class="metric-card highlight"><div class="metric-label">월 순수익</div><div class="metric-value" id="r-net">-</div><div class="metric-sub">세전 추정</div></div>
+          <div class="metric-card"><div class="metric-label">연간 수익</div><div class="metric-value" id="r-annual">-</div><div class="metric-sub">12개월 합산</div></div>
+        </div>
+        <div class="grid-2" style="margin-bottom:16px">
+          <div class="metric-card"><div class="metric-label">월 매출</div><div class="metric-value" id="r-revenue">-</div></div>
+          <div class="metric-card"><div class="metric-label">수익률</div><div class="metric-value" id="r-margin">-</div><div class="metric-sub" id="r-tag-sub">-</div></div>
+        </div>
+        <div class="section-label">수익 구조</div>
+        <div id="bars"></div>
+        <hr>
+        <div class="section-label">AI 컨설턴트 분석</div>
+        <div class="ai-box loading" id="ai-out">분석 버튼을 눌러주세요</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px">
+          <button class="btn-secondary" onclick="switchTab('occupancy',null)">📈 점유율 확인</button>
+          <button class="btn-secondary" onclick="switchTab('competitor',null)">🔍 경쟁 분석</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TAB 2 -->
+<div class="tab-panel" id="tab-occupancy">
+  <div class="card">
+    <div class="card-title">📈 지역별 평균 점유율 & 시장 현황</div>
+    <p style="font-size:13px;color:var(--text-muted);margin-bottom:20px">Inside Airbnb 공개 데이터 및 국내 시장 조사 기반 (2024년 기준 추정치)</p>
+    <div class="grid-2" style="margin-bottom:20px">
+      <div class="field"><label>지역 선택</label>
+        <select id="occ-region" onchange="updateOccupancy()">
+          <option value="seoul_gangnam">서울 강남/서초</option>
+          <option value="seoul_hongdae">서울 홍대/마포</option>
+          <option value="seoul_itaewon">서울 이태원/용산</option>
+          <option value="seoul_jongno">서울 종로/중구</option>
+          <option value="jeju_city">제주 제주시</option>
+          <option value="jeju_seogwipo">제주 서귀포</option>
+          <option value="busan_haeundae">부산 해운대</option>
+          <option value="busan_nampo">부산 남포/서면</option>
+          <option value="gangwon">강원도</option>
+          <option value="gyeonggi">경기도</option>
+        </select>
+      </div>
+      <div class="field"><label>숙소 유형</label>
+        <select id="occ-type" onchange="updateOccupancy()">
+          <option value="studio">원룸/스튜디오</option>
+          <option value="onebed">1베드룸</option>
+          <option value="twobed">2베드룸</option>
+          <option value="house">단독주택/빌라</option>
+          <option value="pension">펜션/독채</option>
+        </select>
+      </div>
+    </div>
+    <div class="grid-4" style="margin-bottom:24px" id="occ-metrics"></div>
+    <div class="section-label">월별 성수기/비수기 패턴</div>
+    <div id="monthly-chart" style="margin-bottom:20px"></div>
+    <div class="section-label">전국 지역별 비교</div>
+    <div id="region-compare"></div>
+    <div class="data-source">📡 Inside Airbnb 공개 데이터, 한국관광공사 통계 기반 추정 | 실제 성과는 운영 방식에 따라 다를 수 있습니다</div>
+  </div>
+</div>
+
+<!-- TAB 3 -->
+<div class="tab-panel" id="tab-regulation">
+  <div class="card">
+    <div class="card-title">⚖️ 자치구별 에어비앤비 규제 체크</div>
+    <div class="grid-2" style="margin-bottom:20px">
+      <div class="field"><label>시/도 선택</label>
+        <select id="reg-sido" onchange="updateRegulation()">
+          <option value="seoul">서울특별시</option>
+          <option value="busan">부산광역시</option>
+          <option value="jeju">제주특별자치도</option>
+          <option value="gangwon">강원특별자치도</option>
+          <option value="gyeonggi">경기도</option>
+        </select>
+      </div>
+      <div class="field"><label>운영 예정 유형</label>
+        <select id="reg-type" onchange="updateRegulation()">
+          <option value="home">도시민박업 (외국인만)</option>
+          <option value="tourist">관광 숙박업 (내외국인)</option>
+          <option value="urban">농어촌 민박</option>
+        </select>
+      </div>
+    </div>
+    <div id="reg-summary" style="margin-bottom:16px"></div>
+    <div class="section-label">자치구별 허용 현황</div>
+    <div class="table-wrap">
+      <table class="reg-table">
+        <thead><tr><th>자치구</th><th>도시민박</th><th>관광숙박</th><th>주요 제한 사항</th><th>담당 부서</th></tr></thead>
+        <tbody id="reg-tbody"></tbody>
+      </table>
+    </div>
+    <hr>
+    <div class="card-title">📜 운영 유형별 법적 요건</div>
+    <div id="legal-reqs"></div>
+  </div>
+</div>
+
+<!-- TAB 4 -->
+<div class="tab-panel" id="tab-roi">
+  <div class="card">
+    <div class="card-title">💰 투자 ROI & 캡레이트 계산기</div>
+    <div class="grid-3" style="margin-bottom:14px">
+      <div class="field"><label>매입가 / 보증금 (만원)</label><input type="number" id="roi-purchase" value="50000" step="1000"><span class="field-hint">전세·매매가 기준</span></div>
+      <div class="field"><label>인테리어/초기 투자 (만원)</label><input type="number" id="roi-setup" value="1500" step="100"></div>
+      <div class="field"><label>월 기대 순수익 (만원)</label><input type="number" id="roi-monthly" value="100" step="10"><span class="field-hint">계산기 탭 결과 입력</span></div>
+    </div>
+    <div class="grid-3" style="margin-bottom:14px">
+      <div class="field"><label>대출 비율 (%)</label><input type="number" id="roi-ltv" value="50" min="0" max="80"></div>
+      <div class="field"><label>대출 금리 (%)</label><input type="number" id="roi-rate" value="5.5" step="0.1"></div>
+      <div class="field"><label>목표 회수 기간 (년)</label><input type="number" id="roi-target" value="7" min="1" max="30"></div>
+    </div>
+    <button class="btn-primary" onclick="calcROI()">💰 ROI 계산하기</button>
+    <div id="roi-results" style="display:none;margin-top:20px">
+      <div class="grid-4" style="margin-bottom:20px" id="roi-metrics"></div>
+      <hr>
+      <div class="section-label">투자 회수 시뮬레이션</div>
+      <div id="roi-chart" style="margin-bottom:16px"></div>
+      <div id="roi-advice"></div>
+    </div>
+  </div>
+</div>
+
+<!-- TAB 5 -->
+<div class="tab-panel" id="tab-competitor">
+  <div class="card">
+    <div class="card-title">🔍 경쟁 숙소 분석</div>
+    <p style="font-size:13px;color:var(--text-muted);margin-bottom:16px">지역·유형을 선택하면 시장 평균 가격과 경쟁 현황을 분석해드립니다</p>
+    <div class="grid-3" style="margin-bottom:16px">
+      <div class="field"><label>분석 지역</label>
+        <select id="comp-region" onchange="updateCompetitor()">
+          <option value="seoul_gangnam">서울 강남/서초</option>
+          <option value="seoul_hongdae">서울 홍대/마포</option>
+          <option value="seoul_itaewon">서울 이태원/용산</option>
+          <option value="seoul_jongno">서울 종로/중구</option>
+          <option value="jeju_city">제주 제주시</option>
+          <option value="jeju_seogwipo">제주 서귀포</option>
+          <option value="busan_haeundae">부산 해운대</option>
+          <option value="busan_nampo">부산 남포/서면</option>
+          <option value="gangwon">강원도</option>
+        </select>
+      </div>
+      <div class="field"><label>숙소 유형</label>
+        <select id="comp-type" onchange="updateCompetitor()">
+          <option value="studio">원룸/스튜디오</option>
+          <option value="onebed">1베드룸</option>
+          <option value="twobed">2베드룸</option>
+          <option value="house">단독주택/빌라</option>
+          <option value="pension">펜션/독채</option>
+        </select>
+      </div>
+      <div class="field"><label>내 1박 가격 (원)</label><input type="number" id="comp-myprice" value="90000" step="5000" oninput="updateCompetitor()"></div>
+    </div>
+    <div id="comp-overview" style="margin-bottom:20px"></div>
+    <div class="section-label">가격대별 분포</div>
+    <div id="comp-dist" style="margin-bottom:20px"></div>
+    <div class="section-label">가상 경쟁 숙소 샘플</div>
+    <div class="grid-3" id="comp-cards" style="margin-bottom:20px"></div>
+    <hr>
+    <div class="section-label">가격 전략 추천</div>
+    <div id="comp-strategy"></div>
+  </div>
+</div>
+
+</main>
+
+<script>
+const regionData={
+  seoul_gangnam:{name:'서울 강남/서초',avgOcc:.65,avgPrice:{studio:110000,onebed:155000,twobed:220000,house:320000,pension:400000},listings:1850,trend:'상승'},
+  seoul_hongdae:{name:'서울 홍대/마포',avgOcc:.68,avgPrice:{studio:85000,onebed:120000,twobed:175000,house:250000,pension:320000},listings:2200,trend:'상승'},
+  seoul_itaewon:{name:'서울 이태원/용산',avgOcc:.62,avgPrice:{studio:95000,onebed:140000,twobed:200000,house:290000,pension:380000},listings:980,trend:'보합'},
+  seoul_jongno:{name:'서울 종로/중구',avgOcc:.70,avgPrice:{studio:90000,onebed:130000,twobed:185000,house:270000,pension:350000},listings:1600,trend:'상승'},
+  jeju_city:{name:'제주 제주시',avgOcc:.72,avgPrice:{studio:75000,onebed:110000,twobed:160000,house:230000,pension:280000},listings:3100,trend:'상승'},
+  jeju_seogwipo:{name:'제주 서귀포',avgOcc:.74,avgPrice:{studio:70000,onebed:105000,twobed:155000,house:220000,pension:300000},listings:2600,trend:'강세'},
+  busan_haeundae:{name:'부산 해운대',avgOcc:.63,avgPrice:{studio:80000,onebed:115000,twobed:165000,house:240000,pension:310000},listings:1700,trend:'상승'},
+  busan_nampo:{name:'부산 남포/서면',avgOcc:.58,avgPrice:{studio:65000,onebed:95000,twobed:140000,house:200000,pension:260000},listings:900,trend:'보합'},
+  gangwon:{name:'강원도',avgOcc:.55,avgPrice:{studio:60000,onebed:90000,twobed:135000,house:200000,pension:250000},listings:4200,trend:'보합'},
+  gyeonggi:{name:'경기도',avgOcc:.50,avgPrice:{studio:55000,onebed:80000,twobed:120000,house:175000,pension:220000},listings:2800,trend:'보합'},
+  other:{name:'기타 지방',avgOcc:.42,avgPrice:{studio:45000,onebed:70000,twobed:100000,house:150000,pension:180000},listings:5000,trend:'하락'}
+};
+const monthlyOcc={
+  seoul_gangnam:[.58,.60,.65,.68,.72,.75,.80,.82,.75,.68,.60,.65],
+  seoul_hongdae:[.60,.62,.67,.70,.74,.77,.82,.84,.77,.70,.62,.67],
+  seoul_itaewon:[.55,.57,.62,.65,.70,.73,.78,.80,.72,.65,.58,.62],
+  seoul_jongno:[.62,.64,.68,.72,.76,.79,.84,.86,.78,.72,.64,.68],
+  jeju_city:[.55,.58,.65,.72,.78,.82,.88,.90,.80,.72,.60,.58],
+  jeju_seogwipo:[.57,.60,.67,.74,.80,.84,.90,.92,.82,.74,.62,.60],
+  busan_haeundae:[.50,.52,.58,.62,.68,.72,.82,.88,.72,.62,.52,.55],
+  busan_nampo:[.48,.50,.55,.58,.63,.66,.72,.76,.66,.58,.50,.52],
+  gangwon:[.60,.55,.50,.52,.55,.60,.72,.78,.65,.58,.50,.65],
+  gyeonggi:[.42,.44,.48,.52,.55,.58,.65,.68,.58,.50,.44,.45]
+};
+const months=['1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'];
+const regulationData={
+  seoul:{name:'서울특별시',districts:[
+    {name:'강남구',home:true,tourist:true,note:'주거지역 30일 초과 제한',dept:'강남구청 관광과'},
+    {name:'마포구',home:true,tourist:true,note:'도시민박 등록 필수',dept:'마포구청 문화관광과'},
+    {name:'용산구',home:true,tourist:true,note:'이태원 특구 완화',dept:'용산구청 관광진흥과'},
+    {name:'종로구',home:true,tourist:true,note:'문화재 인근 별도 심사',dept:'종로구청 문화체육과'},
+    {name:'중구',home:true,tourist:true,note:'명동 특구 적용',dept:'중구청 문화관광과'},
+    {name:'서초구',home:true,tourist:true,note:'주거지역 소음 규제 강화',dept:'서초구청 관광과'},
+    {name:'송파구',home:false,tourist:true,note:'도시민박 불허 (자치 조례)',dept:'송파구청 문화진흥과'},
+    {name:'강동구',home:false,tourist:true,note:'도시민박 불허 (자치 조례)',dept:'강동구청 관광과'},
+  ]},
+  busan:{name:'부산광역시',districts:[
+    {name:'해운대구',home:true,tourist:true,note:'성수기 가격 신고제',dept:'해운대구청 문화관광과'},
+    {name:'중구',home:true,tourist:true,note:'남포동 특구',dept:'중구청 관광진흥과'},
+    {name:'부산진구',home:true,tourist:false,note:'관광숙박 신규 불허',dept:'부산진구청 문화과'},
+    {name:'기장군',home:false,tourist:true,note:'농어촌 지역 별도',dept:'기장군청 관광과'},
+  ]},
+  jeju:{name:'제주특별자치도',districts:[
+    {name:'제주시',home:true,tourist:true,note:'외국인관광도시민박업 허용',dept:'제주시 관광진흥과'},
+    {name:'서귀포시',home:true,tourist:true,note:'농어촌민박 다수',dept:'서귀포시 관광과'},
+  ]},
+  gangwon:{name:'강원특별자치도',districts:[
+    {name:'강릉시',home:true,tourist:true,note:'경포 인근 규제 강화',dept:'강릉시 관광과'},
+    {name:'속초시',home:true,tourist:true,note:'설악산 인근 별도 심사',dept:'속초시 문화관광과'},
+    {name:'평창군',home:false,tourist:true,note:'농어촌 민박 주력',dept:'평창군청 관광과'},
+    {name:'양양군',home:true,tourist:true,note:'서핑 특구 완화',dept:'양양군청 문화관광과'},
+  ]},
+  gyeonggi:{name:'경기도',districts:[
+    {name:'가평군',home:false,tourist:true,note:'농어촌 지역 적용',dept:'가평군청 관광과'},
+    {name:'용인시',home:true,tourist:true,note:'도심 지역 제한',dept:'용인시 관광진흥과'},
+    {name:'수원시',home:true,tourist:false,note:'화성 인근 별도',dept:'수원시 문화관광과'},
+  ]}
+};
+
+function switchTab(name,btn){
+  document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('tab-'+name).classList.add('active');
+  if(btn) btn.classList.add('active');
+  else document.querySelectorAll('.tab-btn')[{calc:0,occupancy:1,regulation:2,roi:3,competitor:4}[name]].classList.add('active');
+  if(name==='occupancy') updateOccupancy();
+  if(name==='regulation') updateRegulation();
+  if(name==='competitor') updateCompetitor();
+}
+
+function fmt(n){return Math.round(n).toLocaleString('ko-KR')+'원'}
+function fmtK(n){return Math.round(n/10000).toLocaleString('ko-KR')+'만원'}
+function pct(v,t){return Math.min(100,Math.max(0,Math.round(v/t*100)))}
+function bar(label,val,total,color){
+  return `<div class="bar-row"><div class="bar-row-label"><span class="name">${label}</span><span class="val">${fmt(val)}</span></div><div class="bar-track"><div class="bar-fill" style="width:${pct(val,total)}%;background:${color}"></div></div></div>`;
+}
+
+async function calculate(){
+  const region=document.getElementById('region').value;
+  const type=document.getElementById('type').value;
+  const price=parseFloat(document.getElementById('price').value)||90000;
+  const cleaning=parseFloat(document.getElementById('cleaning').value)||20000;
+  const days=parseFloat(document.getElementById('days').value)||18;
+  const fixed=parseFloat(document.getElementById('fixed_cost').value)||350000;
+  const variable=parseFloat(document.getElementById('variable_cost').value)||150000;
+  const optype=document.getElementById('optype').value;
+  const legal=document.getElementById('legal').value;
+  const airbnbFee=0.03;
+  const agencyFee=optype==='agency'?.20:0;
+  const revenue=(price+cleaning)*days;
+  const airbnb=revenue*airbnbFee;
+  const agency=revenue*agencyFee;
+  const totalCost=fixed+variable+agency;
+  const net=revenue-airbnb-totalCost;
+  const margin=net/revenue;
+  document.getElementById('r-revenue').textContent=fmt(revenue);
+  document.getElementById('r-net').textContent=fmt(net);
+  document.getElementById('r-annual').textContent=fmtK(net*12);
+  document.getElementById('r-margin').textContent=Math.round(margin*100)+'%';
+  const tagEl=document.getElementById('r-tag-sub');
+  tagEl.textContent=margin>=.45?'🟢 수익성 우수':margin>=.25?'🟡 수익성 보통':'🔴 수익성 낮음';
+  document.getElementById('bars').innerHTML=
+    bar('총 매출',revenue,revenue,'#e5e7eb')+
+    bar('에어비앤비 수수료',airbnb+agency,revenue,'#f59e0b')+
+    bar('운영 비용',totalCost,revenue,'#ef4444')+
+    bar('순수익',Math.max(0,net),revenue,'#FF385C');
+  document.getElementById('result-panel').style.display='block';
+  const aiEl=document.getElementById('ai-out');
+  aiEl.className='ai-box loading';aiEl.textContent='AI 분석 중...';
+  const rData=regionData[region]||regionData['other'];
+  const regionName=rData.name;
+  const typeName={studio:'원룸',onebed:'1베드룸',twobed:'2베드룸',house:'단독주택',pension:'펜션'}[type];
+  const legalName={tourist:'관광숙박업',home:'도시민박업',urban:'농어촌민박'}[legal];
+  const mktPrice=rData.avgPrice[type]||price;
+  const priceDiff=((price-mktPrice)/mktPrice*100).toFixed(0);
+  try{
+    const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:1000,messages:[{role:'user',content:`당신은 국내 에어비앤비 전문 컨설턴트입니다. 아래 숙소 데이터를 분석해 실용적인 한국어 조언을 4~5문장으로 해주세요.\n\n숙소: ${regionName} ${typeName} / 1박 ${fmt(price)} (시장평균 ${fmt(mktPrice)}, ${priceDiff>0?'+':''}${priceDiff}%) / 등록: ${legalName}\n운영: 월 ${days}일 / 매출 ${fmt(revenue)} / 순수익 ${fmt(net)} (수익률 ${Math.round(margin*100)}%) / 연 ${fmtK(net*12)}\n\n①수익성 평가 ②가격 경쟁력 ③핵심 리스크 ④즉시 실행 가능 개선점 1가지`}]})});
+    const data=await res.json();
+    aiEl.className='ai-box';
+    aiEl.textContent=data.content?.find(b=>b.type==='text')?.text||'분석 결과를 불러오지 못했습니다.';
+  }catch(e){
+    aiEl.className='ai-box';aiEl.textContent='네트워크 오류가 발생했습니다.';
+  }
+}
+
+function updateOccupancy(){
+  const region=document.getElementById('occ-region').value;
+  const type=document.getElementById('occ-type').value;
+  const rData=regionData[region]||regionData['other'];
+  const occ=rData.avgOcc;
+  const price=rData.avgPrice[type]||80000;
+  const monthData=monthlyOcc[region]||monthlyOcc['gangwon'];
+  document.getElementById('occ-metrics').innerHTML=`
+    <div class="metric-card highlight"><div class="metric-label">평균 점유율</div><div class="metric-value">${Math.round(occ*100)}%</div><div class="metric-sub">월 ${Math.round(occ*30)}일</div></div>
+    <div class="metric-card"><div class="metric-label">시장 평균가</div><div class="metric-value">${fmt(price)}</div><div class="metric-sub">1박 기준</div></div>
+    <div class="metric-card"><div class="metric-label">등록 숙소 수</div><div class="metric-value">${rData.listings.toLocaleString()}</div><div class="metric-sub">개 (추정)</div></div>
+    <div class="metric-card"><div class="metric-label">시장 트렌드</div><div class="metric-value" style="font-size:16px">${rData.trend}</div><div class="metric-sub">전년 대비</div></div>`;
+  const maxOcc=Math.max(...monthData);
+  document.getElementById('monthly-chart').innerHTML=monthData.map((v,i)=>{
+    const p=Math.round(v/maxOcc*100);
+    const c=v>=.72?'#FF385C':v>=.60?'#f59e0b':'#9ca3af';
+    return `<div style="display:flex;align-items:center;gap:10px;margin-bottom:7px"><div style="width:36px;font-size:12px;color:var(--text-muted);flex-shrink:0">${months[i]}</div><div style="flex:1;background:var(--bg);border-radius:99px;height:22px;overflow:hidden;border:1px solid var(--border)"><div style="width:${p}%;height:100%;background:${c};border-radius:99px;display:flex;align-items:center;padding-left:8px"><span style="font-size:11px;color:white;font-weight:600">${v>=.60?Math.round(v*100)+'%':''}</span></div></div>${v>=.72?'<span style="font-size:11px;color:var(--pink);font-weight:600">성수기</span>':'<span style="font-size:11px;color:var(--text-light)">'+Math.round(v*100)+'%</span>'}</div>`;
+  }).join('');
+  const all=Object.values(regionData).sort((a,b)=>b.avgOcc-a.avgOcc);
+  document.getElementById('region-compare').innerHTML=all.map(r=>`<div class="bar-row"><div class="bar-row-label"><span class="name" style="${r.name===rData.name?'color:var(--pink);font-weight:700':''}">${r.name}${r.name===rData.name?' ◀':''}</span><span class="val">${Math.round(r.avgOcc*100)}%</span></div><div class="bar-track"><div class="bar-fill" style="width:${Math.round(r.avgOcc*100)}%;background:${r.name===rData.name?'#FF385C':'#e5e7eb'}"></div></div></div>`).join('');
+}
+
+function updateRegulation(){
+  const sido=document.getElementById('reg-sido').value;
+  const type=document.getElementById('reg-type').value;
+  const data=regulationData[sido];if(!data)return;
+  const typeInfo={home:{icon:'⚠️',cls:'alert-warn',text:'실거주 주택에서 외국인 관광객만 대상으로 운영 가능합니다. 반드시 주인이 거주해야 하며, 내국인 대상 운영은 불법입니다.'},tourist:{icon:'✅',cls:'alert-success',text:'내·외국인 모두를 대상으로 운영 가능합니다. 시설 기준과 영업 신고가 필요합니다.'},urban:{icon:'🌾',cls:'alert-info',text:'농어촌 지역 주민만 운영 가능합니다. 도시 지역에서는 적용 불가이며, 7실 미만·230㎡ 미만 조건이 필요합니다.'}}[type];
+  document.getElementById('reg-summary').innerHTML=`<div class="alert ${typeInfo.cls}"><span class="alert-icon">${typeInfo.icon}</span><div>${typeInfo.text}</div></div>`;
+  document.getElementById('reg-tbody').innerHTML=data.districts.map(d=>`<tr><td style="font-weight:600">${d.name}</td><td><span class="tag ${d.home?'tag-green':'tag-red'}">${d.home?'✅ 허용':'❌ 불허'}</span></td><td><span class="tag ${d.tourist?'tag-green':'tag-red'}">${d.tourist?'✅ 허용':'❌ 불허'}</span></td><td style="font-size:13px;color:var(--text-muted)">${d.note}</td><td style="font-size:12px;color:var(--text-light)">${d.dept}</td></tr>`).join('');
+  document.getElementById('legal-reqs').innerHTML=[
+    {icon:'🏠',t:'도시민박업',r:'주인 실거주 주택 / 외국인만 가능 / 230㎡ 미만 / 소방·위생 시설 필수'},
+    {icon:'🏨',t:'관광 숙박업',r:'내·외국인 모두 / 시설 기준 충족 / 영업 신고 필수 / 별도 건물 가능'},
+    {icon:'🌾',t:'농어촌 민박',r:'농어촌 주민 직접 운영 / 주인 거주 / 7실 미만 / 230㎡ 미만'},
+  ].map(r=>`<div class="alert alert-info"><span class="alert-icon">${r.icon}</span><div><strong>${r.t}</strong><br><span style="font-size:12px">${r.r}</span></div></div>`).join('');
+}
+
+function calcROI(){
+  const purchase=parseFloat(document.getElementById('roi-purchase').value)||50000;
+  const setup=parseFloat(document.getElementById('roi-setup').value)||1500;
+  const monthly=parseFloat(document.getElementById('roi-monthly').value)||100;
+  const ltv=parseFloat(document.getElementById('roi-ltv').value)||50;
+  const rate=parseFloat(document.getElementById('roi-rate').value)||5.5;
+  const totalInvest=(purchase+setup)*10000;
+  const loanAmt=totalInvest*ltv/100;
+  const equity=totalInvest-loanAmt;
+  const monthlyLoan=loanAmt*(rate/100/12);
+  const netAfterLoan=(monthly*10000)-monthlyLoan;
+  const annualNet=netAfterLoan*12;
+  const capRate=(monthly*10000*12)/totalInvest*100;
+  const cashOnCash=annualNet/equity*100;
+  const payback=totalInvest/(monthly*10000*12);
+  document.getElementById('roi-results').style.display='block';
+  document.getElementById('roi-metrics').innerHTML=`
+    <div class="metric-card highlight"><div class="metric-label">캡레이트</div><div class="metric-value">${capRate.toFixed(1)}%</div><div class="metric-sub">총투자 대비</div></div>
+    <div class="metric-card"><div class="metric-label">현금수익률</div><div class="metric-value">${cashOnCash.toFixed(1)}%</div><div class="metric-sub">자기자본 기준</div></div>
+    <div class="metric-card"><div class="metric-label">투자 회수 기간</div><div class="metric-value">${payback.toFixed(1)}년</div><div class="metric-sub">월 대출 ${fmtK(monthlyLoan)}</div></div>
+    <div class="metric-card"><div class="metric-label">연 순수익</div><div class="metric-value">${fmtK(annualNet)}</div><div class="metric-sub">대출 후</div></div>`;
+  let html='';let cumNet=-equity;
+  for(let y=0;y<=Math.min(20,parseInt(document.getElementById('roi-target').value||7)+5);y++){
+    const ok=cumNet>=0;
+    html+=`<div class="bar-row"><div class="bar-row-label"><span class="name">${y}년 후${ok?' ✅':''}</span><span class="val" style="color:${ok?'var(--green)':'var(--text-muted)'}">${cumNet>=0?'+':''}${fmtK(cumNet)}</span></div><div class="bar-track"><div class="bar-fill" style="width:${Math.min(100,Math.abs(cumNet)/totalInvest*100)}%;background:${ok?'var(--green)':'#e5e7eb'}"></div></div></div>`;
+    cumNet+=annualNet;
+  }
+  document.getElementById('roi-chart').innerHTML=html;
+  const isGood=capRate>=6&&payback<=10;
+  document.getElementById('roi-advice').innerHTML=`<div class="alert ${isGood?'alert-success':'alert-warn'}"><span class="alert-icon">${isGood?'✅':'⚠️'}</span><div><strong>${isGood?'투자 매력도: 양호':'투자 주의 필요'}</strong><br>캡레이트 ${capRate.toFixed(1)}% (국내 기준 5~8% 적정) / 예상 회수 ${payback.toFixed(1)}년<br><span style="font-size:12px;opacity:.8">* 공실, 수선비, 세금 미반영 추정치입니다. 실제 투자 전 세무사 상담을 권장합니다.</span></div></div>`;
+}
+
+function updateCompetitor(){
+  const region=document.getElementById('comp-region').value;
+  const type=document.getElementById('comp-type').value;
+  const myPrice=parseFloat(document.getElementById('comp-myprice').value)||90000;
+  const rData=regionData[region]||regionData['other'];
+  const mktPrice=rData.avgPrice[type]||80000;
+  const diff=((myPrice-mktPrice)/mktPrice*100).toFixed(0);
+  const isHigh=myPrice>mktPrice*1.15;const isLow=myPrice<mktPrice*.85;
+  document.getElementById('comp-overview').innerHTML=`<div class="grid-3" style="margin-bottom:12px">
+    <div class="metric-card"><div class="metric-label">시장 평균가</div><div class="metric-value">${fmt(mktPrice)}</div><div class="metric-sub">${rData.name}</div></div>
+    <div class="metric-card ${!isHigh?'highlight':''}"><div class="metric-label">내 가격</div><div class="metric-value">${fmt(myPrice)}</div><div class="metric-sub">${diff>0?'시장 대비 +':'시장 대비 '}${diff}%</div></div>
+    <div class="metric-card"><div class="metric-label">경쟁 숙소 수</div><div class="metric-value">${rData.listings.toLocaleString()}</div><div class="metric-sub">개 (추정)</div></div>
+  </div><div class="alert ${isHigh?'alert-warn':isLow?'alert-info':'alert-success'}"><span class="alert-icon">${isHigh?'⚠️':isLow?'💡':'✅'}</span><div>${isHigh?`시장 평균보다 ${diff}% 높습니다. 차별화 요소가 없다면 예약이 줄어들 수 있어요.`:isLow?`시장 평균보다 ${Math.abs(diff)}% 낮습니다. 초기 리뷰 확보에 유리하지만 장기적 가격 인상 전략이 필요해요.`:'시장 평균 대비 적정 수준입니다. 현재 포지셔닝이 양호합니다.'}</div></div>`;
+  const ranges=[{label:`~${fmtK(mktPrice*.7)}`,s:12},{label:`~${fmtK(mktPrice*.85)}`,s:22},{label:`~${fmtK(mktPrice)}`,s:30},{label:`~${fmtK(mktPrice*1.15)}`,s:22},{label:`${fmtK(mktPrice*1.15)}~`,s:14}];
+  document.getElementById('comp-dist').innerHTML=ranges.map((r,i)=>{
+    const inR=(i===0&&myPrice<mktPrice*.7)||(i===1&&myPrice>=mktPrice*.7&&myPrice<mktPrice*.85)||(i===2&&myPrice>=mktPrice*.85&&myPrice<mktPrice)||(i===3&&myPrice>=mktPrice&&myPrice<mktPrice*1.15)||(i===4&&myPrice>=mktPrice*1.15);
+    return `<div class="bar-row"><div class="bar-row-label"><span class="name" style="${inR?'color:var(--pink);font-weight:700':''}">${r.label}${inR?' ◀ 내 가격':''}</span><span class="val">${r.s}%</span></div><div class="bar-track"><div class="bar-fill" style="width:${r.s*3}%;background:${inR?'var(--pink)':'#e5e7eb'}"></div></div></div>`;
+  }).join('');
+  const names=['감성 스테이','시티뷰 하우스','코지홈','모던 스위트','더 루프'];
+  const prices=[.75,.88,.95,1.05,1.25].map(m=>Math.round(mktPrice*m/1000)*1000);
+  const ratings=[4.6,4.8,4.9,4.7,4.5];const reviews=[45,128,212,89,31];
+  document.getElementById('comp-cards').innerHTML=prices.map((p,i)=>`<div class="competitor-card"><div style="font-size:13px;font-weight:600;color:var(--text-muted)">${names[i]}</div><div class="comp-price">${fmt(p)}</div><div style="display:flex;align-items:center;gap:4px;font-size:13px;font-weight:600">⭐ ${ratings[i]} <span style="font-weight:400;color:var(--text-muted)">(${reviews[i]}개)</span></div><div class="comp-meta">${p>myPrice?'내 가격보다 '+fmt(p-myPrice)+' 비쌈':'내 가격보다 '+fmt(myPrice-p)+' 저렴'}</div></div>`).join('');
+  document.getElementById('comp-strategy').innerHTML=`<ul class="tip-list">
+    <li><div class="tip-dot"></div><div><strong>주말/평일 차등</strong> — 주말 ${fmt(Math.round(myPrice*1.35/1000)*1000)} / 평일 ${fmt(Math.round(myPrice*.85/1000)*1000)}으로 설정하면 점유율과 수익을 동시에 잡을 수 있어요</div></li>
+    <li><div class="tip-dot"></div><div><strong>성수기 가격 전략</strong> — 7~8월, 설·추석 연휴는 현재 가격 대비 +40~60%까지 올려도 예약이 들어와요</div></li>
+    <li><div class="tip-dot"></div><div><strong>최소 숙박 설정</strong> — 주중 1박 가능, 주말 2박 최소로 설정하면 단기 공실을 줄일 수 있어요</div></li>
+    <li><div class="tip-dot"></div><div><strong>스마트 가격 주의</strong> — 에어비앤비 스마트 가격은 낮게 잡히는 경향이 있으니 참고용으로만 활용하세요</div></li>
+  </ul>`;
+}
+
+updateOccupancy();updateRegulation();updateCompetitor();
+</script>
+</body>
+</html>
