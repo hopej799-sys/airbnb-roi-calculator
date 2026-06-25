@@ -497,7 +497,7 @@ async function calculate(){
   const mktPrice=rData.avgPrice[type]||price;
   const priceDiff=((price-mktPrice)/mktPrice*100).toFixed(0);
   try{
-    const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:1000,messages:[{role:'user',content:`당신은 국내 에어비앤비 전문 컨설턴트입니다. 아래 숙소 데이터를 분석해 실용적인 한국어 조언을 4~5문장으로 해주세요.\n\n숙소: ${regionName} ${typeName} / 1박 ${fmt(price)} (시장평균 ${fmt(mktPrice)}, ${priceDiff>0?'+':''}${priceDiff}%) / 등록: ${legalName}\n운영: 월 ${days}일 / 매출 ${fmt(revenue)} / 순수익 ${fmt(net)} (수익률 ${Math.round(margin*100)}%) / 연 ${fmtK(net*12)}\n\n①수익성 평가 ②가격 경쟁력 ③핵심 리스크 ④즉시 실행 가능 개선점 1가지`}]})});
+    const res=await fetch('/api/analyze',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({prompt:`당신은 국내 에어비앤비 전문 컨설턴트입니다. 아래 숙소 데이터를 분석해 실용적인 한국어 조언을 4~5문장으로 해주세요.\n\n숙소: ${regionName} ${typeName} / 1박 ${fmt(price)} (시장평균 ${fmt(mktPrice)}, ${priceDiff>0?'+':''}${priceDiff}%) / 등록: ${legalName}\n운영: 월 ${days}일 / 매출 ${fmt(revenue)} / 순수익 ${fmt(net)} (수익률 ${Math.round(margin*100)}%) / 연 ${fmtK(net*12)}\n\n①수익성 평가 ②가격 경쟁력 ③핵심 리스크 ④즉시 실행 가능 개선점 1가지`})});
     const data=await res.json();
     aiEl.className='ai-box';
     aiEl.textContent=data.content?.find(b=>b.type==='text')?.text||'분석 결과를 불러오지 못했습니다.';
