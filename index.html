@@ -20,6 +20,18 @@
   --shadow:0 1px 3px rgba(0,0,0,.08),0 1px 2px rgba(0,0,0,.04);
 }
 body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text);font-size:15px;line-height:1.6;min-height:100vh}
+.gate{position:fixed;inset:0;background:linear-gradient(135deg,#1a1a2e 0%,#16213e 50%,#0f3460 100%);display:flex;align-items:center;justify-content:center;z-index:9999;transition:opacity .4s}
+.gate.hide{opacity:0;pointer-events:none}
+.gate-box{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.12);border-radius:20px;padding:48px 40px;width:100%;max-width:400px;text-align:center;backdrop-filter:blur(12px)}
+.gate-logo{width:56px;height:56px;background:var(--pink);border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:28px;margin:0 auto 20px}
+.gate-title{font-size:20px;font-weight:700;color:#fff;margin-bottom:6px}
+.gate-sub{font-size:13px;color:rgba(255,255,255,.5);margin-bottom:32px}
+.gate-input{width:100%;padding:14px 16px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);border-radius:10px;font-family:inherit;font-size:15px;color:#fff;outline:none;text-align:center;letter-spacing:.2em;margin-bottom:12px;transition:border-color .2s}
+.gate-input::placeholder{color:rgba(255,255,255,.3);letter-spacing:0}
+.gate-input:focus{border-color:var(--pink)}
+.gate-btn{width:100%;padding:14px;background:var(--pink);border:none;border-radius:10px;font-family:inherit;font-size:15px;font-weight:700;color:#fff;cursor:pointer;transition:background .15s;margin-bottom:12px}
+.gate-btn:hover{background:var(--pink-dark)}
+.gate-err{font-size:13px;color:#ff6b6b;min-height:20px;transition:opacity .2s}
 header{background:var(--surface);border-bottom:1px solid var(--border);padding:0 24px;position:sticky;top:0;z-index:100}
 .header-inner{max-width:1100px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;height:60px}
 .logo{display:flex;align-items:center;gap:10px;font-weight:700;font-size:17px;color:var(--text);text-decoration:none}
@@ -98,6 +110,17 @@ hr{border:none;border-top:1px solid var(--border);margin:20px 0}
 </style>
 </head>
 <body>
+
+<div class="gate" id="gate">
+  <div class="gate-box">
+    <div class="gate-logo">🏠</div>
+    <div class="gate-title">에어비앤비 수익 분석</div>
+    <div class="gate-sub">접근 코드를 입력해주세요</div>
+    <input class="gate-input" id="gate-pw" type="password" placeholder="비밀번호" maxlength="20" onkeydown="if(event.key==='Enter')gateCheck()">
+    <button class="gate-btn" onclick="gateCheck()">입장하기</button>
+    <div class="gate-err" id="gate-err"></div>
+  </div>
+</div>
 
 <header>
   <div class="header-inner">
@@ -582,6 +605,23 @@ function updateCompetitor(){
 }
 
 updateOccupancy();updateRegulation();updateCompetitor();
+
+const PASS='airbnb2024';
+function gateCheck(){
+  const v=document.getElementById('gate-pw').value;
+  const err=document.getElementById('gate-err');
+  if(v===PASS){
+    sessionStorage.setItem('gate','ok');
+    const g=document.getElementById('gate');
+    g.classList.add('hide');
+    setTimeout(()=>g.style.display='none',400);
+  } else {
+    err.textContent='비밀번호가 올바르지 않습니다';
+    document.getElementById('gate-pw').value='';
+    document.getElementById('gate-pw').focus();
+  }
+}
+if(sessionStorage.getItem('gate')==='ok') document.getElementById('gate').style.display='none';
 </script>
 </body>
 </html>
